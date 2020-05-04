@@ -42,5 +42,32 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+    // X section
+    Mux16(a=true, b=false, sel=zx, out=xZxMuxOut);
+    And16(a=x, b=xZxMuxOut, out=xAndzx);
+    Not16(in=xAndzx, out=NotxAndzx);
+    Mux16(a=xAndzx, b=NotxAndzx, sel=nx, out=xout);
+
+    // Y section
+    Mux16(a=true, b=false, sel=zy, out=yZyMuxOut);
+    And16(a=y, b=yZyMuxOut, out=yAndzy);
+    Not16(in=yAndzy, out=NotyAndzy);
+    Mux16(a=yAndzy, b=NotyAndzy, sel=ny, out=yout);
+
+    // F section
+    Add16(a=xout, b=yout, out=xAddy);
+    And16(a=xout, b=yout, out=xAndy);
+    Mux16(a=xAndy, b=xAddy, sel=f, out=fout);
+    Not16(in=fout, out=Notfout);
+    Mux16(a=fout, b=Notfout, sel=no, out[0..7]=outMux1, out[8..14]=outMux2, out[15]=outMuxMsb);
+    And16(a[0..7]=outMux1, a[8..14]=outMux2, a[15]=outMuxMsb, b[0..15]=true, out=out);
+
+    // Negative flag
+    And(a=outMuxMsb, b=true, out=ng);
+
+    // Zero flag
+    Or8Way(in=outMux1, out=zeroOutFirst);
+    Or8Way(in[0..6]=outMux2, in[7]=outMuxMsb, out=zeroOutSecond);
+    Or(a=zeroOutFirst, b=zeroOutSecond, out=ZeroOrFirstSecond);
+    Not(in=ZeroOrFirstSecond, out=zr);
 }
